@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!DOCTYPE hibernate-configuration PUBLIC
+    "-//Hibernate/Hibernate Configuration DTD//EN"
+    "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+  <session-factory>
+    <property name="connection.url">jdbc:mysql://localhost:3306/padelHub</property>
+
+    <!-- DB schema will be updated if needed -->
+    <!-- <property name="hibernate.hbm2ddl.auto">update</property> -->
+    <property name="connection.driver_class">com.mysql.jdbc.Driver</property>
+    <property name="dialect">org.hibernate.dialect.MySQLDialect</property>
+
+    <mapping class="com.adriangalende.padelHub.entity.TiposClubEntity"/>
+    <mapping class="com.adriangalende.padelHub.entity.ClubEntity"/>
+    <mapping class="com.adriangalende.padelHub.entity.PistaEntity"/>
+    <mapping class="com.adriangalende.padelHub.entity.PreciosEntity"/>
+    <mapping class="com.adriangalende.padelHub.entity.ReservaEntity"/>
+    <mapping class="com.adriangalende.padelHub.entity.TiposPistaEntity"/>
+    <mapping class="com.adriangalende.padelHub.entity.TiposReservaEntity"/>
+    <mapping class="com.adriangalende.padelHub.entity.TiposUsuarioEntity"/>
+    <mapping class="com.adriangalende.padelHub.entity.UsuariosEntity"/>
+
+  </session-factory>
+</hibernate-configuration>
