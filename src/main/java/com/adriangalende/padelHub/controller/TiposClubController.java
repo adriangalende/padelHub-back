@@ -30,7 +30,6 @@ public class TiposClubController {
         ObjectMapper mapper = new ObjectMapper();
 
         List<TiposClub> listaTiposClub = service.listar();
-
         try {
             return mapper.writeValueAsString(listaTiposClub);
         } catch (JsonProcessingException e) {

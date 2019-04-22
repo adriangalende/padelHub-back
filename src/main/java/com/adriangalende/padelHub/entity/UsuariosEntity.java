@@ -1,11 +1,13 @@
 package com.adriangalende.padelHub.entity;
 
+import com.adriangalende.padelHub.model.Usuarios;
+
 import javax.persistence.*;
 import java.util.Collection;
 import java.util.Objects;
 
 @Entity
-@Table(name = "usuarios", schema = "padelhub", catalog = "")
+@Table(name = "usuarios", schema = "padelhub")
 public class UsuariosEntity {
     private int id;
     private String nombre;
@@ -13,9 +15,22 @@ public class UsuariosEntity {
     private int idTiposUsuario;
     private int idClub;
     private String password;
+    private String email;
     private Collection<ReservaEntity> reservasById;
     private TiposUsuarioEntity tiposUsuarioByIdTiposUsuario;
     private ClubEntity clubByIdClub;
+
+    public UsuariosEntity(){ }
+
+    public UsuariosEntity(Usuarios usuario){
+        this.id = usuario.getId();
+        this.nombre = usuario.getNombre();
+        this.telefono = usuario.getTelefono();
+        this.idTiposUsuario = usuario.getIdTiposUsuario();
+        this.idClub = usuario.getIdClub();
+        this.password = usuario.getPassword();
+        this.email = usuario.getEmail();
+    }
 
     @Id
     @Column(name = "id")
@@ -76,6 +91,12 @@ public class UsuariosEntity {
     public void setPassword(String password) {
         this.password = password;
     }
+
+    @Basic
+    @Column(name = "email")
+    public String getEmail(){return  email;}
+
+    public void setEmail(String email){ this.email = email; }
 
     @Override
     public boolean equals(Object o) {
