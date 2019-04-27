@@ -20,6 +20,7 @@ public class Reserva {
     private int idTipoReserva;
     private Double precio;
     private int duracion;
+    private int flexibilidad;
 
     public Reserva() {
     }
@@ -114,5 +115,13 @@ public class Reserva {
 
     public void setDuracion(int duracion) {
         this.duracion = duracion;
+    }
+
+    public int getFlexibilidad() {
+        return flexibilidad;
+    }
+
+    public void setFlexibilidad(int flexibilidad) {
+        this.flexibilidad = flexibilidad;
     }
 }

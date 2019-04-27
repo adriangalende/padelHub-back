@@ -28,7 +28,7 @@ public class ReservaConverter {
                 RespuestaDisponibilidadPista respuestaDisponibilidadPista = new RespuestaDisponibilidadPista();
                 respuestaDisponibilidadPista.setIdPista(String.valueOf(reserva.getIdPista()));
                 respuestaDisponibilidadPista.setNombre(reserva.getPistaByIdPista().getNombre());
-                respuestaDisponibilidadPista.setClub(reserva.getClubByIdClub().getNombre());
+                respuestaDisponibilidadPista.setClub(reserva.getPistaByIdPista().getClubByIdClub().getNombre());
                 respuestaDisponibilidadPista.setTipoPista(reserva.getPistaByIdPista().getTiposPistaByIdTipoPista().getDescripcion());
                 respuestaDisponibilidadPista.setRutaImagenes("");
                 respuestaDisponibilidadPista.setPrecio(reserva.getPrecio().toString());

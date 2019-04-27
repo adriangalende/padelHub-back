@@ -17,11 +17,6 @@ public interface ReservaRepository extends JpaRepository<ReservaEntity, Serializ
 
     public abstract List<ReservaEntity> findAllByHoraInicioLessThanEqualAndHoraFinGreaterThanEqual(Date horaInicio, Date horaFin);
 
-    //select * from reserva
-    //where
-    //    (hora_inicio between '2019-04-23 17:30:00' AND '2019-04-23 18:00:00' or hora_fin between '2019-04-23 16:30:00' AND '2019-04-23 18:00:00')
-    //    AND
-    //    hora_inicio < '2019-04-23 18:00:00' ;
-    @Query(value="from ReservaEntity reserva WHERE (reserva.horaInicio BETWEEN :horaInicio AND :horaFin OR reserva.horaFin BETWEEN :horaInicio AND :horaFin) AND reserva.horaInicio < :horaFin")
+    @Query(value="from ReservaEntity reserva WHERE (reserva.horaInicio >= :horaInicio or reserva.horaFin > :horaInicio) and reserva.horaInicio < :horaFin ")
     public abstract List<ReservaEntity> getAllBetweenDates(@Param("horaInicio") Date horaInicio, @Param("horaFin") Date horaFin);
 }

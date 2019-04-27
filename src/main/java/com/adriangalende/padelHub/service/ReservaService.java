@@ -10,18 +10,23 @@ import com.adriangalende.padelHub.repository.ReservaRepository;
 import com.adriangalende.padelHub.utils.Utils;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service("servicio_reserva")
 public class ReservaService {
+
+    private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     @Qualifier("repositorio_reserva")
@@ -85,44 +90,135 @@ public class ReservaService {
     public List<RespuestaDisponibilidadPista> buscar(Reserva reserva) throws JSONException {
         JSONObject jsonResponse = new JSONObject();
 
-            List<ReservaEntity> listaPistasFiltradas = new ArrayList<>();
+            List<ReservaEntity> listaDisponibilidadPistasReserva = new ArrayList<>();
 
+            reserva.setFlexibilidad(controlFlexibilidad(reserva.getFlexibilidad()));
 
-            reserva = prepararPeticionBusquedaReserva(reserva);
+            Date horaInicio = (Date) reserva.getHoraInicio().clone();
 
-            //Primero validamos si los datos de entrada son correctos
-            jsonResponse = validarPeticionBusquedaReserva(reserva);
+        /**
+         *    tantas peticiones como flexibilidad se haya elegido:
+         *    i = 0 -> Sin flexibilidad, queremos pista únicamente a esa hora
+         *    i > 0 -> flexibilidad = i -> +1 hora, +2 horas.
+         */
+            for(int i=0 ; i <= reserva.getFlexibilidad() ; i++){
+                Calendar nuevaHoraInicio = Calendar.getInstance();
+                nuevaHoraInicio.setTime(horaInicio);
+                nuevaHoraInicio.add(Calendar.HOUR_OF_DAY, i);
+                reserva.setHoraInicio(nuevaHoraInicio.getTime());
 
-            if(jsonResponse.getBoolean("success")){
+                reserva = prepararPeticionBusquedaReserva(reserva);
 
-                List<ReservaEntity> reservasEntity = repository.getAllBetweenDates(reserva.getHoraInicio(), reserva.getHoraFin());
-                List<Reserva> reservasEncontradas = converter.convertirLista(reservasEntity);
-                List<Pista> listaPistas = pistaService.obtenerPistas();
+                //Primero validamos si los datos de entrada son correctos
+                jsonResponse = validarPeticionBusquedaReserva(reserva);
 
+                if(jsonResponse.getBoolean("success")){
+                    //Reservas encontradas con los parámetros de búsqueda.
+                    List<ReservaEntity> reservasEntity = repository.getAllBetweenDates(reserva.getHoraInicio(), reserva.getHoraFin());
+                    List<Reserva> reservasEncontradas = converter.convertirLista(reservasEntity);
+                    List<Pista> listaPistas = pistaService.obtenerPistas();
+                    List<Pista> listaPistasFiltradas = new ArrayList<>();
 
-                if(reservasEncontradas.size() > 0){
-                    List<ReservaEntity> finalListaPistasFiltradas = listaPistasFiltradas;
-                    listaPistas.forEach(pista -> {
-                        finalListaPistasFiltradas.add(pistaReservada(reservasEntity, pista.getId()));
-                    });
-                }
+                    listaPistasFiltradas.addAll(filtrarListaPistas(reservasEntity, listaPistas));
+                    if(listaPistasFiltradas.size() == 0){
+                        listaPistasFiltradas.addAll(listaPistas);
+                    }
 
-                if(listaPistasFiltradas != null){
-                    return converter.convertirListaRespuestaDispo(listaPistasFiltradas);
+                    listaDisponibilidadPistasReserva.addAll(generarListaPistasDisponiblesReserva(reserva, listaPistasFiltradas));
+
                 }
 
             }
+
+        if(listaDisponibilidadPistasReserva != null){
+            return converter.convertirListaRespuestaDispo(listaDisponibilidadPistasReserva);
+        }
 
         return null;
     }
 
-    private ReservaEntity pistaReservada(List<ReservaEntity> pistasReservadas, int idPista){
-        for(ReservaEntity reserva:pistasReservadas){
-            if(idPista == reserva.getIdPista()){
-                return reserva;
+    /**
+     * Ajustamos flexibilidad por si llega un parámetro no deseado.
+     * la flexibilidad horaria permitida es únicamente +1 o +2
+     *
+     * @param flexibilidad
+     * @return
+     */
+    private int controlFlexibilidad(int flexibilidad){
+        if(flexibilidad < 0){
+            return 0;
+        } else if (flexibilidad > 2){
+            return 2;
+        } else {
+            return flexibilidad;
+        }
+    }
+
+    /**
+     * Comparamos la pista en cada una de las reservas encontradas con TODAS las ids de pistas que
+     * tenemos en la base de datos.
+     *
+     * Si no encontramos coincidencia, añadimos una reserva con la id de pista ( de la tabla pista ), porque significa
+     * que esa pista está disponible para reservar.
+     *
+     * @param reservaEntities
+     * @param pistaList
+     * @return
+     */
+    private List<Pista> filtrarListaPistas(List<ReservaEntity> reservaEntities, List<Pista> pistaList){
+
+        List<Pista> resultadoPistasDisponibles = new ArrayList<>();
+
+        for(Pista pista : pistaList){
+            if(!pistaReservada(reservaEntities, pista.getId())){
+                resultadoPistasDisponibles.add(pista);
             }
         }
-        return null;
+
+        return resultadoPistasDisponibles;
+    }
+
+    /**
+     *
+     * @param reserva
+     * @param listaPistas
+     * @return
+     */
+    private List<ReservaEntity> generarListaPistasDisponiblesReserva(Reserva reserva, List<Pista> listaPistas){
+        List<ReservaEntity> pistasDisponiblesReserva = new ArrayList<>();
+
+        for(Pista pista:listaPistas){
+
+            ReservaEntity reservaAuxiliar = new ReservaEntity();
+            BeanUtils.copyProperties(reserva, reservaAuxiliar);
+
+            reservaAuxiliar.setIdPista(pista.getId());
+            reservaAuxiliar.setPistaByIdPista(pistaService.datosPista(pista.getId()).get());
+            //TODO modificar precio reserva según la id de la pista
+            reservaAuxiliar.setPrecio(0.0);
+            pistasDisponiblesReserva.add(reservaAuxiliar);
+
+
+        }
+
+        return pistasDisponiblesReserva;
+    }
+
+
+    /**
+     * Busca la id de la pista en la lista de reservas
+     * @param reservaEntities
+     * @param idPista
+     * @return boolean
+     */
+    private boolean pistaReservada(List<ReservaEntity> reservaEntities, int idPista){
+
+        for(ReservaEntity reservaEntity:reservaEntities){
+            if(idPista == reservaEntity.getIdPista()){
+                return true;
+            }
+        }
+        return false;
     }
 
 }

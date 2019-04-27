@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service("servicio_pista")
 public class PistaService {
@@ -23,6 +24,10 @@ public class PistaService {
 
     public List<Pista> obtenerPistas(){
         return converter.convertirListaEntities(repository.findAll());
+    }
+
+    public Optional<PistaEntity> datosPista(int idPista){
+        return repository.findById(idPista);
     }
 
 
