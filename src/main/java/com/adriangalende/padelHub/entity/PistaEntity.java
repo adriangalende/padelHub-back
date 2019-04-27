@@ -1,11 +1,13 @@
 package com.adriangalende.padelHub.entity;
 
+import com.adriangalende.padelHub.model.Pista;
+
 import javax.persistence.*;
 import java.util.Collection;
 import java.util.Objects;
 
 @Entity
-@Table(name = "pista", schema = "padelhub", catalog = "")
+@Table(name = "pista", schema = "padelhub")
 public class PistaEntity {
     private int id;
     private String nombre;
@@ -16,6 +18,16 @@ public class PistaEntity {
     private TiposPistaEntity tiposPistaByIdTipoPista;
     private Collection<PreciosEntity> preciosById;
     private Collection<ReservaEntity> reservasById;
+
+    public PistaEntity(){}
+
+    public PistaEntity(Pista pista){
+        this.id = pista.getId();
+        this.nombre = pista.getNombre();
+        this.idClub = pista.getIdClub();
+        this.idTipoPista = pista.getIdTipoPista();
+        this.carpetaImagenes = pista.getCarpetaImagenes();
+    }
 
     @Id
     @Column(name = "id")

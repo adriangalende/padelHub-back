@@ -11,6 +11,7 @@ public class Pista {
     private String nombre;
     private int idClub;
     private int idTipoPista;
+    private String carpetaImagenes;
 
     public Pista(){}
 
@@ -19,5 +20,46 @@ public class Pista {
         this.nombre = pistaEntity.getNombre();
         this.idClub = pistaEntity.getIdClub();
         this.idTipoPista = pistaEntity.getIdTipoPista();
+        this.carpetaImagenes = pistaEntity.getCarpetaImagenes();
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
+    public int getIdClub() {
+        return idClub;
+    }
+
+    public void setIdClub(int idClub) {
+        this.idClub = idClub;
+    }
+
+    public int getIdTipoPista() {
+        return idTipoPista;
+    }
+
+    public void setIdTipoPista(int idTipoPista) {
+        this.idTipoPista = idTipoPista;
+    }
+
+    public String getCarpetaImagenes() {
+        return carpetaImagenes;
+    }
+
+    public void setCarpetaImagenes(String carpetaImagenes) {
+        this.carpetaImagenes = carpetaImagenes;
     }
 }

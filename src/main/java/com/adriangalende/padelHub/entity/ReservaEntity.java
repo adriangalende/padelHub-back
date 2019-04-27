@@ -1,17 +1,21 @@
 package com.adriangalende.padelHub.entity;
 
+import com.adriangalende.padelHub.model.Reserva;
+
 import javax.persistence.*;
+import java.sql.Timestamp;
+import java.util.Date;
 import java.util.Objects;
 
 @Entity
-@Table(name = "reserva", schema = "padelhub", catalog = "")
+@Table(name = "reserva", schema = "padelhub")
 public class ReservaEntity {
     private int id;
     private int idUsuario;
     private int idClub;
     private int idPista;
-    private String horaInicio;
-    private String horaFin;
+    private Date horaInicio;
+    private Date horaFin;
     private String fecha;
     private int idTipoReserva;
     private Double precio;
@@ -19,6 +23,22 @@ public class ReservaEntity {
     private ClubEntity clubByIdClub;
     private PistaEntity pistaByIdPista;
     private TiposReservaEntity tiposReservaByIdTipoReserva;
+    private int duracion;
+
+    public ReservaEntity(){}
+
+    public ReservaEntity(Reserva reserva) {
+        this.id = reserva.getId();
+        this.idUsuario = reserva.getIdUsuario();
+        this.idClub = reserva.getIdClub();
+        this.idPista = reserva.getIdPista();
+        this.horaInicio = reserva.getHoraInicio();
+        this.horaFin = reserva.getHoraFin();
+        this.fecha = reserva.getFecha();
+        this.idTipoReserva = reserva.getIdTipoReserva();
+        this.precio = reserva.getPrecio();
+        this.duracion = reserva.getDuracion();
+    }
 
     @Id
     @Column(name = "id")
@@ -62,21 +82,23 @@ public class ReservaEntity {
 
     @Basic
     @Column(name = "hora_inicio")
-    public String getHoraInicio() {
+    @Temporal(TemporalType.TIMESTAMP)
+    public Date getHoraInicio() {
         return horaInicio;
     }
 
-    public void setHoraInicio(String horaInicio) {
+    public void setHoraInicio(Date horaInicio) {
         this.horaInicio = horaInicio;
     }
 
     @Basic
     @Column(name = "hora_fin")
-    public String getHoraFin() {
+    @Temporal(TemporalType.TIMESTAMP)
+    public Date getHoraFin() {
         return horaFin;
     }
 
-    public void setHoraFin(String horaFin) {
+    public void setHoraFin(Date horaFin) {
         this.horaFin = horaFin;
     }
 
@@ -108,6 +130,14 @@ public class ReservaEntity {
 
     public void setPrecio(Double precio) {
         this.precio = precio;
+    }
+
+    @Basic
+    @Column(name = "duracion")
+    public int getDuracion(){ return duracion;}
+
+    public void setDuracion(int duracion){
+        this.duracion = duracion;
     }
 
     @Override

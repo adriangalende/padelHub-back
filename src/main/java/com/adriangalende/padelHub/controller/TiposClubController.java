@@ -15,7 +15,7 @@ import java.util.List;
 
 
 @RestController
-@RequestMapping(value = "/api")
+@RequestMapping(value = "/ws")
 public class TiposClubController {
 
     private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());

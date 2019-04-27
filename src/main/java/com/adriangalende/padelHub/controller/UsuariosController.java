@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.validation.Valid;
 
 @RestController
-@RequestMapping(value="/api")
+@RequestMapping(value="/ws")
 public class UsuariosController {
 
     private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
