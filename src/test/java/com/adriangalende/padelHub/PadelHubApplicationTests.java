@@ -168,9 +168,9 @@ public class PadelHubApplicationTests {
 	public void registroTestUsuarioDatosOk() throws IOException, JSONException {
 		jsonUsuario = "{\n" +
 				"\t\"nombre\": \"Nombre Priape\",\n" +
-				"\t\"telefono\":\"696162488\",\n" +
+				"\t\"telefono\":\"696162481\",\n" +
 				"\t\"password\":\"pepito\",\n" +
-				"\t\"email\":\"nomPriape@gmail.com\"\n" +
+				"\t\"email\":\"nomPriap1e@gmail.com\"\n" +
 				"}";
 		Usuarios usuario = objectMapper.readValue(jsonUsuario, Usuarios.class);
 		JSONObject respuesta = usuariosService.alta(usuario);

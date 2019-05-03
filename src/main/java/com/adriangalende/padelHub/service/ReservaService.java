@@ -18,10 +18,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Service("servicio_reserva")
 public class ReservaService {
@@ -50,11 +47,28 @@ public class ReservaService {
      * @param reserva
      * @return
      */
-    private JSONObject validarPeticionBusquedaReserva(Reserva reserva){
+    private JSONObject validarPeticionBusquedaReserva(Reserva reserva, boolean initial){
 
-        if(reserva.getHoraInicio() == null || reserva.getHoraFin() == null){
+        if((reserva.getHoraInicio() == null || reserva.getHoraFin() == null) && !initial){
             return Utils.jsonResponseSetter(false, "Las horas de inicio y final no son correctas");
+        } else if (reserva.getHoraInicio() == null && initial){
+            return Utils.jsonResponseSetter(false, "La hora de inicio no puede enviarse vacía");
         }
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(reserva.getHoraInicio());
+
+        int hora = calendar.get(Calendar.HOUR_OF_DAY);
+        int minutos = calendar.get(Calendar.MINUTE);
+
+        if( (hora < 9 && minutos >= 0)  || ( hora > 22 && minutos > 0)){
+            return Utils.jsonResponseSetter(false, "Las horas de reserva son de 9:00 a 22:00");
+        }
+
+        if(reserva.getDuracion() == 0){
+            return Utils.jsonResponseSetter(false, "La duración de la partida no puede enviarse vacía");
+        }
+
 
         return Utils.jsonResponseSetter(true, "OK");
     }
@@ -87,21 +101,27 @@ public class ReservaService {
      * @param reserva
      * @return
      */
-    public List<RespuestaDisponibilidadPista> buscar(Reserva reserva) throws JSONException {
+    public JSONObject buscar(Reserva reserva) throws JSONException {
         JSONObject jsonResponse = new JSONObject();
 
-            List<ReservaEntity> listaDisponibilidadPistasReserva = new ArrayList<>();
+        List<ReservaEntity> listaDisponibilidadPistasReserva = new ArrayList<>();
 
-            reserva.setFlexibilidad(controlFlexibilidad(reserva.getFlexibilidad()));
+        reserva.setFlexibilidad(controlFlexibilidad(reserva.getFlexibilidad()));
 
-            Date horaInicio = (Date) reserva.getHoraInicio().clone();
+        jsonResponse = validarPeticionBusquedaReserva(reserva, true);
 
-        /**
-         *    tantas peticiones como flexibilidad se haya elegido:
-         *    i = 0 -> Sin flexibilidad, queremos pista únicamente a esa hora
-         *    i > 0 -> flexibilidad = i -> +1 hora, +2 horas.
-         */
-            for(int i=0 ; i <= reserva.getFlexibilidad() ; i++){
+        Date horaInicio = null;
+        if (reserva.getHoraInicio() != null) {
+            horaInicio = (Date) reserva.getHoraInicio().clone();
+        }
+
+        if (horaInicio != null && jsonResponse.getBoolean("success")) {
+            /**
+             *    tantas peticiones como flexibilidad se haya elegido:
+             *    i = 0 -> Sin flexibilidad, queremos pista únicamente a esa hora
+             *    i > 0 -> flexibilidad = i -> +1 hora, +2 horas.
+             */
+            for (int i = 0; i <= reserva.getFlexibilidad(); i++) {
                 Calendar nuevaHoraInicio = Calendar.getInstance();
                 nuevaHoraInicio.setTime(horaInicio);
                 nuevaHoraInicio.add(Calendar.HOUR_OF_DAY, i);
@@ -110,9 +130,9 @@ public class ReservaService {
                 reserva = prepararPeticionBusquedaReserva(reserva);
 
                 //Primero validamos si los datos de entrada son correctos
-                jsonResponse = validarPeticionBusquedaReserva(reserva);
+                jsonResponse = validarPeticionBusquedaReserva(reserva, false);
 
-                if(jsonResponse.getBoolean("success")){
+                if (jsonResponse.getBoolean("success")) {
                     //Reservas encontradas con los parámetros de búsqueda.
                     List<ReservaEntity> reservasEntity = repository.getAllBetweenDates(reserva.getHoraInicio(), reserva.getHoraFin());
                     List<Reserva> reservasEncontradas = converter.convertirLista(reservasEntity);
@@ -120,7 +140,7 @@ public class ReservaService {
                     List<Pista> listaPistasFiltradas = new ArrayList<>();
 
                     listaPistasFiltradas.addAll(filtrarListaPistas(reservasEntity, listaPistas));
-                    if(listaPistasFiltradas.size() == 0){
+                    if (listaPistasFiltradas.size() == 0) {
                         listaPistasFiltradas.addAll(listaPistas);
                     }
 
@@ -130,11 +150,13 @@ public class ReservaService {
 
             }
 
-        if(listaDisponibilidadPistasReserva != null){
-            return converter.convertirListaRespuestaDispo(listaDisponibilidadPistasReserva);
+            if (listaDisponibilidadPistasReserva != null) {
+                jsonResponse.put("message", converter.convertirListaRespuestaDispo(listaDisponibilidadPistasReserva));
+                return jsonResponse;
+            }
         }
 
-        return null;
+        return jsonResponse;
     }
 
     /**

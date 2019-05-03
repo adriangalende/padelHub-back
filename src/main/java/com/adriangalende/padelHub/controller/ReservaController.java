@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -24,16 +25,18 @@ public class ReservaController {
 
     @RequestMapping(value="/buscar")
     public String buscarPistas(@RequestBody @Valid Reserva reservas){
-        List<RespuestaDisponibilidadPista> pistas = null;
+        JSONObject jsonObject = null;
         ObjectMapper mapper = new ObjectMapper();
+        List<RespuestaDisponibilidadPista> pistas = new ArrayList<>();
         try {
-            pistas = service.buscar(reservas);
+            jsonObject = service.buscar(reservas);
 
-            if(pistas != null){
+            if(jsonObject != null && jsonObject.getBoolean("success")){
                 try {
+                    pistas.addAll((List<RespuestaDisponibilidadPista>)jsonObject.get("message"));
                     return mapper.writeValueAsString(pistas);
                 } catch (JsonProcessingException e) {
-                    return "Error al intentar obtener los tipos de club en formato json";
+                    return "Error al convertir la clase a json para ver las pistas disponibles";
                 }
             }
 
@@ -41,6 +44,10 @@ public class ReservaController {
             e.printStackTrace();
         }
 
-        return "Error al intentar obtener los tipos de club en formato json";
+        try {
+            return (String)jsonObject.get("message");
+        }catch (JSONException e) {
+            return "El formato json no es correcto";
+        }
     }
 }
