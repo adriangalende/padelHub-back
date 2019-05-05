@@ -2,11 +2,13 @@ package com.adriangalende.padelHub.model;
 
 import com.adriangalende.padelHub.entity.ReservaEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.Date;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Reserva {
     private int id;
     private int idUsuario;

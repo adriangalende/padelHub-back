@@ -19,4 +19,8 @@ public interface ReservaRepository extends JpaRepository<ReservaEntity, Serializ
 
     @Query(value="from ReservaEntity reserva WHERE (reserva.horaInicio >= :horaInicio or reserva.horaFin > :horaInicio) and reserva.horaInicio < :horaFin ")
     public abstract List<ReservaEntity> getAllBetweenDates(@Param("horaInicio") Date horaInicio, @Param("horaFin") Date horaFin);
+
+    @Query(value="from ReservaEntity reserva WHERE reserva.idPista = :idPista and ((reserva.horaInicio >= :horaInicio or reserva.horaFin > :horaInicio) and reserva.horaInicio < :horaFin )")
+    public abstract List<ReservaEntity> recuperarReserva(@Param("idPista") int idPista,@Param("horaInicio") Date horaInicio, @Param("horaFin") Date horaFin);
+
 }

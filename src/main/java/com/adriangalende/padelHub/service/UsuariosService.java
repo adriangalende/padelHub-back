@@ -129,6 +129,8 @@ public class UsuariosService {
         return jsonResponse;
     }
 
-
+    public Usuarios obtenerUsuario(int id){
+        return converter.convertirUsuarioModelo(repository.findById(id).get());
+    }
 
 }

@@ -22,11 +22,13 @@ import java.util.List;
 public class ReservaController {
     @Autowired
     ReservaService service;
+    ObjectMapper mapper;
+    JSONObject jsonObject;
 
     @RequestMapping(value="/buscar")
     public String buscarPistas(@RequestBody @Valid Reserva reservas){
-        JSONObject jsonObject = null;
-        ObjectMapper mapper = new ObjectMapper();
+        jsonObject = null;
+        mapper = new ObjectMapper();
         List<RespuestaDisponibilidadPista> pistas = new ArrayList<>();
         try {
             jsonObject = service.buscar(reservas);
@@ -50,4 +52,29 @@ public class ReservaController {
             return "El formato json no es correcto";
         }
     }
+
+
+    @RequestMapping(value="/reservar")
+    public String reservarPista(@RequestBody @Valid Reserva reserva){
+        jsonObject = null;
+        mapper = new ObjectMapper();
+
+        try {
+            jsonObject = service.reservar(reserva);
+            if(jsonObject.getBoolean("success")){
+                return mapper.writeValueAsString(jsonObject.get("message"));
+            }
+        } catch (JSONException e) {
+            return "El formato json no es correcto";
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            return (String)jsonObject.get("message");
+        } catch (JSONException e) {
+            return "El formato json no es correcto";
+        }
+    }
+
 }

@@ -12,6 +12,7 @@ public class PreciosEntity {
     private double precio;
     private Double suplementoLuz;
     private PistaEntity pistaByIdPista;
+    private int idTipoUsuario;
 
     @Id
     @Column(name = "id_pista")
@@ -53,6 +54,16 @@ public class PreciosEntity {
         this.suplementoLuz = suplementoLuz;
     }
 
+    @Basic
+    @Column(name = "id_tipo_usuario")
+    public int getIdTipoUsuario() {
+        return idTipoUsuario;
+    }
+
+    public void setIdTipoUsuario(int idTipoUsuario) {
+        this.idTipoUsuario = idTipoUsuario;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -61,12 +72,13 @@ public class PreciosEntity {
         return idPista == that.idPista &&
                 Double.compare(that.precio, precio) == 0 &&
                 Objects.equals(franjaHoraria, that.franjaHoraria) &&
-                Objects.equals(suplementoLuz, that.suplementoLuz);
+                Objects.equals(suplementoLuz, that.suplementoLuz) &&
+                Objects.equals(idTipoUsuario, that.idTipoUsuario);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(idPista, franjaHoraria, precio, suplementoLuz);
+        return Objects.hash(idPista, franjaHoraria, precio, suplementoLuz, idTipoUsuario);
     }
 
     @ManyToOne

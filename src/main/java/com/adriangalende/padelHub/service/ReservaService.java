@@ -3,11 +3,10 @@ package com.adriangalende.padelHub.service;
 
 import com.adriangalende.padelHub.converter.ReservaConverter;
 import com.adriangalende.padelHub.entity.ReservaEntity;
-import com.adriangalende.padelHub.model.Pista;
-import com.adriangalende.padelHub.model.Reserva;
-import com.adriangalende.padelHub.model.RespuestaDisponibilidadPista;
+import com.adriangalende.padelHub.model.*;
 import com.adriangalende.padelHub.repository.ReservaRepository;
 import com.adriangalende.padelHub.utils.Utils;
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -18,6 +17,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service("servicio_reserva")
@@ -30,12 +31,22 @@ public class ReservaService {
     private ReservaRepository repository;
 
     @Autowired
+    @Qualifier("servicio_precios")
+    private PreciosService preciosService;
+
+    @Autowired
     @Qualifier("servicio_pista")
-    PistaService pistaService;
+    private PistaService pistaService;
+
+    @Autowired
+    @Qualifier("servicio_usuarios")
+    private UsuariosService usuariosService;
 
     @Autowired
     @Qualifier("convertidor_reserva")
     private ReservaConverter converter;
+
+
 
     /**
      * Comprobamos que:
@@ -55,13 +66,11 @@ public class ReservaService {
             return Utils.jsonResponseSetter(false, "La hora de inicio no puede enviarse vacía");
         }
 
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(reserva.getHoraInicio());
 
-        int hora = calendar.get(Calendar.HOUR_OF_DAY);
-        int minutos = calendar.get(Calendar.MINUTE);
+        int hora = reserva.getHoraInicio().getHours();
+        int minutos = reserva.getHoraInicio().getMinutes();
 
-        if( (hora < 9 && minutos >= 0)  || ( hora > 22 && minutos > 0)){
+        if( (hora < 9 && minutos >= 0)  || ( hora >= 22 && minutos > 0 ||  (hora > 22 && minutos >= 0))){
             return Utils.jsonResponseSetter(false, "Las horas de reserva son de 9:00 a 22:00");
         }
 
@@ -122,7 +131,7 @@ public class ReservaService {
              *    i > 0 -> flexibilidad = i -> +1 hora, +2 horas.
              */
             for (int i = 0; i <= reserva.getFlexibilidad(); i++) {
-                Calendar nuevaHoraInicio = Calendar.getInstance();
+                Calendar nuevaHoraInicio = Calendar.getInstance(TimeZone.getTimeZone(Utils.DEFAULT_TIMEZONE));
                 nuevaHoraInicio.setTime(horaInicio);
                 nuevaHoraInicio.add(Calendar.HOUR_OF_DAY, i);
                 reserva.setHoraInicio(nuevaHoraInicio.getTime());
@@ -216,8 +225,16 @@ public class ReservaService {
 
             reservaAuxiliar.setIdPista(pista.getId());
             reservaAuxiliar.setPistaByIdPista(pistaService.datosPista(pista.getId()).get());
-            //TODO modificar precio reserva según la id de la pista
-            reservaAuxiliar.setPrecio(0.0);
+
+            Usuarios usuario = usuariosService.obtenerUsuario(reserva.getIdUsuario());
+            Precios precio = preciosService.obtenerPrecios(pista.getId(), usuario.getIdTiposUsuario(), reservaAuxiliar.getHoraInicio());
+            if(precio.getSuplementoLuz() == null) {
+                precio.setPrecio(0.0);
+                precio.setSuplementoLuz(0.0);
+            }
+
+            reservaAuxiliar.setPrecio(precio.getPrecio() + precio.getSuplementoLuz());
+
             pistasDisponiblesReserva.add(reservaAuxiliar);
 
 
@@ -241,6 +258,109 @@ public class ReservaService {
             }
         }
         return false;
+    }
+
+
+    /**
+     * Método que reserva la pista del usuario
+     * 1. Comprobar que los datos que obtenemos de la reserva son correctos
+     * 2. Comprobar que ESA PISTA no está reservada en esa franja horaria
+     * 3. Mostrar resumen de la reserva
+     * @param reserva
+     * @return jsonObject {"success":ture/false, "message":String/Object}
+     *
+     */
+    public JSONObject reservar(Reserva reserva) throws JSONException {
+        //Aprovechamos la función que hicimos para validar los datos en la búsqueda de pistas
+        JSONObject jsonObject = validarPeticionBusquedaReserva(reserva, true);
+
+        //Hemos comprobado si la hora de reserva y la duración son correctas
+        if(jsonObject.getBoolean("success")){
+
+            //Le asignamos la hora de finalización basándonos en la hora de inicio y la duración de la partida
+            reserva = prepararPeticionBusquedaReserva(reserva);
+
+            //comprobar idPista e idUsuario viene informado
+            jsonObject = prepararPeticionReserva(reserva);
+
+            //No llega el tipo de reserva informado, así que le asignamos el valor por defecto
+            if(StringUtils.equalsAnyIgnoreCase("DEFAULT_TIPORESERVA", jsonObject.getString("message"))){
+                reserva.setIdTipoReserva(Utils.DEFAULT_TIPO_RESERVA);
+            }
+
+            //Volvemos a comprobar el precio por si ha habido algún cambio inesperado
+            reserva = controlPrecio(reserva);
+
+            if(jsonObject.getBoolean("success")&& repository.recuperarReserva(reserva.getIdPista(), reserva.getHoraInicio(), reserva.getHoraFin()).size() == 0){
+                try{
+                    //Añadimos la fecha de la reserva
+                    DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+                    dateFormat.setTimeZone(TimeZone.getTimeZone(Utils.DEFAULT_TIMEZONE));
+                    Date hoy = Calendar.getInstance(TimeZone.getTimeZone(Utils.DEFAULT_TIMEZONE)).getTime();
+                    reserva.setFecha(dateFormat.format(hoy));
+
+                    ReservaEntity reservaEntity = converter.convertirReservaEntity(reserva);
+
+                    reservaEntity = repository.saveAndFlush(reservaEntity);
+                    jsonObject.put("message", converter.convertirReservaModelo(reservaEntity));
+
+                    return  jsonObject;
+                }catch (Exception e){
+                 LOGGER.error("Ha ocurrido un error al intentar guardar la reserva", e);
+                 return Utils.jsonResponseSetter(false,"No se ha podido realizar la reserva");
+                }
+            } else {
+                return Utils.jsonResponseSetter(false, "Ups! parece que alguien se te ha adelantado!");
+            }
+        }
+
+        return  jsonObject;
+    }
+
+    /**
+     * Comprobamos que el precio de la pista corresponde al que está
+     * en la base de datos
+     * @param reserva
+     * @return
+     */
+    private Reserva controlPrecio(Reserva reserva) {
+        Usuarios usuario = usuariosService.obtenerUsuario(reserva.getIdUsuario());
+        Precios precio = preciosService.obtenerPrecios(reserva.getIdPista(), usuario.getIdTiposUsuario(), reserva.getHoraInicio());
+
+        //TODO CUANDO LA RESERVA SEA UN BLOQUEO IGNORAR EL CÁLCULO DE PRECIO
+        if(reserva.getIdTipoReserva() != 3) {
+            if (precio.getSuplementoLuz() == null) {
+                precio.setSuplementoLuz(0.0);
+            }
+            //El precio y el suplemento de luz son por hora
+            Double horas = (reserva.getDuracion() / 60.0);
+            Double precioFinal = (precio.getPrecio() + precio.getSuplementoLuz()) * horas;
+            reserva.setPrecio(precioFinal);
+        }
+
+
+        return reserva;
+    }
+
+    /**
+     * Comprobamos que varios parámetros lleguen informados porque son necesarios
+     * para realizar la reserva correctamente.
+     */
+    private JSONObject prepararPeticionReserva(Reserva reserva) {
+        if(reserva.getIdClub() == 0){
+           return Utils.jsonResponseSetter(false,"La id del club debe venir informada");
+        }
+
+        if(reserva.getIdUsuario() == 0){
+            return Utils.jsonResponseSetter(false, "La id de usuario debe venir informada");
+        }
+
+        if(reserva.getIdTipoReserva() == 0){
+            return Utils.jsonResponseSetter(true,"DEFAULT_TIPORESERVA");
+        }
+
+        return Utils.jsonResponseSetter(true,"OK");
+
     }
 
 }
