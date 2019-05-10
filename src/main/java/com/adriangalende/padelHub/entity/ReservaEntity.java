@@ -24,6 +24,8 @@ public class ReservaEntity {
     private PistaEntity pistaByIdPista;
     private TiposReservaEntity tiposReservaByIdTipoReserva;
     private int duracion;
+    private int checkIn;
+    private int noShow;
 
     public ReservaEntity(){}
 
@@ -38,6 +40,8 @@ public class ReservaEntity {
         this.idTipoReserva = reserva.getIdTipoReserva();
         this.precio = reserva.getPrecio();
         this.duracion = reserva.getDuracion();
+        this.checkIn = reserva.getCheckin();
+        this.noShow = reserva.getNoShow();
     }
 
     @Id
@@ -141,6 +145,17 @@ public class ReservaEntity {
         this.duracion = duracion;
     }
 
+    @Basic
+    @Column(name = "checkin")
+    public int getCheckIn(){ return  checkIn; }
+    public void setCheckIn(int checkIn){ this.checkIn = checkIn; }
+
+    @Basic
+    @Column(name = "no_show")
+
+    public int getNoShow(){ return  noShow; }
+    public void setNoShow(int noShow){ this.noShow = noShow; }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -154,12 +169,14 @@ public class ReservaEntity {
                 Objects.equals(horaInicio, that.horaInicio) &&
                 Objects.equals(horaFin, that.horaFin) &&
                 Objects.equals(fecha, that.fecha) &&
-                Objects.equals(precio, that.precio);
+                Objects.equals(precio, that.precio) &&
+                Objects.equals(checkIn, that.checkIn) &&
+                Objects.equals(noShow,that.noShow);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, idUsuario, idClub, idPista, horaInicio, horaFin, fecha, idTipoReserva, precio);
+        return Objects.hash(id, idUsuario, idClub, idPista, horaInicio, horaFin, fecha, idTipoReserva, precio, checkIn, noShow);
     }
 
     @ManyToOne

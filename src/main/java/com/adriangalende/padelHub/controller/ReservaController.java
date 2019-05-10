@@ -1,5 +1,6 @@
 package com.adriangalende.padelHub.controller;
 
+import com.adriangalende.padelHub.model.PeticionCancelarPista;
 import com.adriangalende.padelHub.model.Pista;
 import com.adriangalende.padelHub.model.Reserva;
 import com.adriangalende.padelHub.model.RespuestaDisponibilidadPista;
@@ -75,6 +76,30 @@ public class ReservaController {
         } catch (JSONException e) {
             return "El formato json no es correcto";
         }
+    }
+
+    @RequestMapping(value="/cancelar")
+    public String cancelarPista(@RequestBody @Valid PeticionCancelarPista peticion){
+        jsonObject = null;
+        mapper = new ObjectMapper();
+
+        try{
+            jsonObject = service.cancelar(peticion);
+            if(jsonObject.getBoolean("success")){
+                return mapper.writeValueAsString(jsonObject.get("message"));
+            }
+        }catch (JSONException e){
+            return "El formato json no es correcto";
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            return (String)jsonObject.get("message");
+        } catch (JSONException e) {
+            return "El formato json no es correcto";
+        }
+
     }
 
 }

@@ -23,6 +23,8 @@ public class Reserva {
     private Double precio;
     private int duracion;
     private int flexibilidad;
+    private int checkin;
+    private int noShow;
 
     public Reserva() {
     }
@@ -37,6 +39,8 @@ public class Reserva {
         this.fecha = reservaEntity.getFecha();
         this.idTipoReserva = reservaEntity.getIdTipoReserva();
         this.precio = reservaEntity.getPrecio();
+        this.checkin = reservaEntity.getCheckIn();
+        this.noShow = reservaEntity.getNoShow();
     }
 
     public int getId() {
@@ -125,5 +129,21 @@ public class Reserva {
 
     public void setFlexibilidad(int flexibilidad) {
         this.flexibilidad = flexibilidad;
+    }
+
+    public int getCheckin() {
+        return checkin;
+    }
+
+    public void setCheckin(int checkin) {
+        this.checkin = checkin;
+    }
+
+    public int getNoShow() {
+        return noShow;
+    }
+
+    public void setNoShow(int noShow) {
+        this.noShow = noShow;
     }
 }

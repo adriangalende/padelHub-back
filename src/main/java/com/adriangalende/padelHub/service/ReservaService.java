@@ -260,6 +260,52 @@ public class ReservaService {
         return false;
     }
 
+    /**
+     * Comprobamos que el precio de la pista corresponde al que está
+     * en la base de datos
+     * @param reserva
+     * @return
+     */
+    private Reserva controlPrecio(Reserva reserva) {
+        Usuarios usuario = usuariosService.obtenerUsuario(reserva.getIdUsuario());
+        Precios precio = preciosService.obtenerPrecios(reserva.getIdPista(), usuario.getIdTiposUsuario(), reserva.getHoraInicio());
+
+        //TODO CUANDO LA RESERVA SEA UN BLOQUEO IGNORAR EL CÁLCULO DE PRECIO
+        if(reserva.getIdTipoReserva() != 3) {
+            if (precio.getSuplementoLuz() == null) {
+                precio.setSuplementoLuz(0.0);
+            }
+            //El precio y el suplemento de luz son por hora
+            Double horas = (reserva.getDuracion() / 60.0);
+            Double precioFinal = (precio.getPrecio() + precio.getSuplementoLuz()) * horas;
+            reserva.setPrecio(precioFinal);
+        }
+
+
+        return reserva;
+    }
+
+    /**
+     * Comprobamos que varios parámetros lleguen informados porque son necesarios
+     * para realizar la reserva correctamente.
+     */
+    private JSONObject prepararPeticionReserva(Reserva reserva) {
+        if(reserva.getIdClub() == 0){
+            return Utils.jsonResponseSetter(false,"La id del club debe venir informada");
+        }
+
+        if(reserva.getIdUsuario() == 0){
+            return Utils.jsonResponseSetter(false, "La id de usuario debe venir informada");
+        }
+
+        if(reserva.getIdTipoReserva() == 0){
+            return Utils.jsonResponseSetter(true,"DEFAULT_TIPORESERVA");
+        }
+
+        return Utils.jsonResponseSetter(true,"OK");
+
+    }
+
 
     /**
      * Método que reserva la pista del usuario
@@ -317,50 +363,54 @@ public class ReservaService {
         return  jsonObject;
     }
 
+
     /**
-     * Comprobamos que el precio de la pista corresponde al que está
-     * en la base de datos
-     * @param reserva
+     * Método para cancelar pista
+     * 1- Comprobamos que el usuario cumpla 1 de estos requisitos:
+     *  1.1 - Tipousuario = club (admin)
+     *  1.2 - Ser el mismo usuario que realizó la reserva.
+     *
+     * 2- La reserva no puede haberse validado ( checkin, noshow )
+     *
+     * @param peticion
      * @return
      */
-    private Reserva controlPrecio(Reserva reserva) {
-        Usuarios usuario = usuariosService.obtenerUsuario(reserva.getIdUsuario());
-        Precios precio = preciosService.obtenerPrecios(reserva.getIdPista(), usuario.getIdTiposUsuario(), reserva.getHoraInicio());
+    public JSONObject cancelar(PeticionCancelarPista peticion) {
+        JSONObject jsonObject = null;
+        Optional<ReservaEntity> reserva  = repository.findById(peticion.getIdReserva());
+        ReservaEntity reservaEntity = new ReservaEntity();
 
-        //TODO CUANDO LA RESERVA SEA UN BLOQUEO IGNORAR EL CÁLCULO DE PRECIO
-        if(reserva.getIdTipoReserva() != 3) {
-            if (precio.getSuplementoLuz() == null) {
-                precio.setSuplementoLuz(0.0);
-            }
-            //El precio y el suplemento de luz son por hora
-            Double horas = (reserva.getDuracion() / 60.0);
-            Double precioFinal = (precio.getPrecio() + precio.getSuplementoLuz()) * horas;
-            reserva.setPrecio(precioFinal);
+        Usuarios usuario = usuariosService.obtenerUsuario(peticion.getIdUsuario());
+        if(usuario == null || usuario.getId() == 0){
+            return Utils.jsonResponseSetter(false, "El usuario no existe o no tiene permisos");
         }
 
+        if( reserva.isPresent()){
+            reservaEntity = reserva.get();
+            Reserva reservaAux = converter.convertirReservaModelo(reservaEntity);
 
-        return reserva;
+                //Si la reserva que se quiere cancelar ya ha sido validada ( checkin = 1 o noshow = 1 )
+                if(reservaEntity.getCheckIn() == 1 || reservaEntity.getNoShow() == 1){
+                    return Utils.jsonResponseSetter(false, "No se pueden borrar reservas pasadas.");
+                }
+
+                /** Comprobamos que el usuario sea el mismo que realizó la reserva o su
+                 *  tipo_usuario sea club ( admin ) y la reserva esté hecha en ese club
+                 ***/
+
+                if(usuario.getId() == reservaEntity.getIdUsuario() ||
+                        ( StringUtils.equalsIgnoreCase(usuariosService.obtenerTipoUsuario(usuario.getId()), "club") && usuario.getIdClub() == reservaEntity.getIdClub()) ){
+                    repository.delete(reservaEntity);
+                    return Utils.jsonResponseSetter(true, "Se ha borrado la reserva correctamente: " + reservaAux.getId());
+
+                } else {
+                    return Utils.jsonResponseSetter(false, "El usuario no puede cancelar la reserva");
+                }
+        }
+
+        return Utils.jsonResponseSetter(false, "No se ha podido cancelar la reserva");
     }
 
-    /**
-     * Comprobamos que varios parámetros lleguen informados porque son necesarios
-     * para realizar la reserva correctamente.
-     */
-    private JSONObject prepararPeticionReserva(Reserva reserva) {
-        if(reserva.getIdClub() == 0){
-           return Utils.jsonResponseSetter(false,"La id del club debe venir informada");
-        }
 
-        if(reserva.getIdUsuario() == 0){
-            return Utils.jsonResponseSetter(false, "La id de usuario debe venir informada");
-        }
-
-        if(reserva.getIdTipoReserva() == 0){
-            return Utils.jsonResponseSetter(true,"DEFAULT_TIPORESERVA");
-        }
-
-        return Utils.jsonResponseSetter(true,"OK");
-
-    }
 
 }

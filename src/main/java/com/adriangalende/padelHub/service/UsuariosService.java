@@ -18,6 +18,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import javax.rmi.CORBA.Util;
 import java.util.List;
+import java.util.Optional;
 
 
 @Service("servicio_usuarios")
@@ -130,7 +131,19 @@ public class UsuariosService {
     }
 
     public Usuarios obtenerUsuario(int id){
-        return converter.convertirUsuarioModelo(repository.findById(id).get());
+        Optional<UsuariosEntity> usuario = repository.findById(id);
+        if(usuario.isPresent()){
+            return converter.convertirUsuarioModelo(usuario.get());
+        }
+        return null;
+    }
+
+    public String obtenerTipoUsuario(int id){
+        Optional<UsuariosEntity> usuario = repository.findById(id);
+        if(usuario.isPresent()){
+            return usuario.get().getTiposUsuarioByIdTiposUsuario().getNombre();
+        }
+        return "KO";
     }
 
 }

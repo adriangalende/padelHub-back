@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Optional;
 
 @Repository("repositorio_usuarios")
 public interface UsuariosRepository extends JpaRepository<UsuariosEntity, Serializable> {
@@ -13,4 +14,6 @@ public interface UsuariosRepository extends JpaRepository<UsuariosEntity, Serial
     public abstract UsuariosEntity findByEmailAndTelefono(String email, String telefono);
 
     public abstract List<UsuariosEntity> findByEmailOrTelefono(String email, String telefono);
+
+    public abstract Optional<UsuariosEntity> findById(int id);
 }
