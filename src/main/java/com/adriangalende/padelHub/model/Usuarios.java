@@ -1,6 +1,7 @@
 package com.adriangalende.padelHub.model;
 
 import com.adriangalende.padelHub.entity.UsuariosEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class Usuarios {
     private int id;

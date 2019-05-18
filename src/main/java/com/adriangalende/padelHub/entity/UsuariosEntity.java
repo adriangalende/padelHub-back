@@ -19,6 +19,7 @@ public class UsuariosEntity {
     private Collection<ReservaEntity> reservasById;
     private TiposUsuarioEntity tiposUsuarioByIdTiposUsuario;
     private ClubEntity clubByIdClub;
+    private String token;
 
     public UsuariosEntity(){ }
 
@@ -97,6 +98,11 @@ public class UsuariosEntity {
     public String getEmail(){return  email;}
 
     public void setEmail(String email){ this.email = email; }
+
+    @Basic
+    @Column(name="token")
+    public String getToken(){return  token;}
+    public void setToken(String token){this.token = token;}
 
     @Override
     public boolean equals(Object o) {
