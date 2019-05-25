@@ -10,23 +10,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 
 @RestController
-@RequestMapping(value="/ws")
+@CrossOrigin
 public class ReservaController {
     @Autowired
     ReservaService service;
     ObjectMapper mapper;
     JSONObject jsonObject;
 
-    @RequestMapping(value="/buscar")
+    @RequestMapping(value="/ws/buscar")
     public String buscarPistas(@RequestBody @Valid Reserva reservas){
         jsonObject = null;
         mapper = new ObjectMapper();
@@ -55,13 +53,13 @@ public class ReservaController {
     }
 
 
-    @RequestMapping(value="/reservar")
-    public String reservarPista(@RequestBody @Valid Reserva reserva){
+    @RequestMapping(value="/wss/reservar")
+    public String reservarPista(@RequestBody @Valid Reserva reserva, @RequestHeader("Authorization") String token){
         jsonObject = null;
         mapper = new ObjectMapper();
 
         try {
-            jsonObject = service.reservar(reserva);
+            jsonObject = service.reservar(reserva, token);
             if(jsonObject.getBoolean("success")){
                 return mapper.writeValueAsString(jsonObject.get("message"));
             }
@@ -78,7 +76,7 @@ public class ReservaController {
         }
     }
 
-    @RequestMapping(value="/cancelar")
+    @RequestMapping(value="/wss/cancelar")
     public String cancelarPista(@RequestBody @Valid PeticionCancelarPista peticion){
         jsonObject = null;
         mapper = new ObjectMapper();

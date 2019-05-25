@@ -22,8 +22,6 @@ import java.util.Collections;
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(
-        securedEnabled = true,
-        jsr250Enabled = true,
         prePostEnabled = true
 )
 public class JwtSecurityConfig extends WebSecurityConfigurerAdapter {
@@ -49,16 +47,9 @@ public class JwtSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception{
-        http.cors().and().csrf()
-                .disable()
-                .exceptionHandling()
-                .authenticationEntryPoint(entryPoint)
-                .and()
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
-                .authorizeRequests()
-                .antMatchers("**").permitAll();
+        http.cors().and().csrf().disable().authorizeRequests().antMatchers("**/wss/**").
+                authenticated().and().exceptionHandling().authenticationEntryPoint(entryPoint).
+                and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 
         http.addFilterBefore(authenticationTokenFilter(), UsernamePasswordAuthenticationFilter.class);
 

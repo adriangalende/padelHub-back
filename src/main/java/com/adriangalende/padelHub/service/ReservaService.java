@@ -5,6 +5,7 @@ import com.adriangalende.padelHub.converter.ReservaConverter;
 import com.adriangalende.padelHub.entity.ReservaEntity;
 import com.adriangalende.padelHub.model.*;
 import com.adriangalende.padelHub.repository.ReservaRepository;
+import com.adriangalende.padelHub.security.JwtValidator;
 import com.adriangalende.padelHub.utils.Utils;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONException;
@@ -14,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpRequest;
 import org.springframework.stereotype.Service;
 
 
@@ -93,6 +95,11 @@ public class ReservaService {
         Date horaFin = (Date) reserva.getHoraInicio().clone();
         horaFin.setMinutes(horaFin.getMinutes()+reserva.getDuracion());
         reserva.setHoraFin(horaFin);
+
+        //Si no tenemos información del usuario le asignamos el usuario por defecto
+        if(reserva.getIdUsuario() == 0){
+            reserva.setIdUsuario(1);
+        }
 
         return reserva;
     }
@@ -308,7 +315,7 @@ public class ReservaService {
 
 
     /**
-     * Método que reserva la pista del usuario
+     * Método que reserva la pista del usuario (Para test)
      * 1. Comprobar que los datos que obtenemos de la reserva son correctos
      * 2. Comprobar que ESA PISTA no está reservada en esa franja horaria
      * 3. Mostrar resumen de la reserva
@@ -319,6 +326,7 @@ public class ReservaService {
     public JSONObject reservar(Reserva reserva) throws JSONException {
         //Aprovechamos la función que hicimos para validar los datos en la búsqueda de pistas
         JSONObject jsonObject = validarPeticionBusquedaReserva(reserva, true);
+
 
         //Hemos comprobado si la hora de reserva y la duración son correctas
         if(jsonObject.getBoolean("success")){
@@ -363,6 +371,108 @@ public class ReservaService {
         return  jsonObject;
     }
 
+
+    /**
+     * Comprobamos si los datos que llegan por petición coinciden
+     * con la información que nos llega desde el token JWT
+     * Campos que comprobamos
+     *
+     * @param reserva
+     * @param jwtUser
+     * @return
+     */
+    private JSONObject controlUsuario(Reserva reserva, JwtUser jwtUser){
+
+        if(reserva.getIdUsuario() != jwtUser.getId()){
+            LOGGER.error("Se ha detectado una posible manipulación del token o de la id de usuario");
+            return Utils.jsonResponseSetter(false, "No se ha podido realizar la reserva, contacta con el administrador");
+        }
+
+        return Utils.jsonResponseSetter(true,"OK");
+    }
+
+    /**
+     *
+     * Método que reserva la pista del usuario (Mismo método pero con sobrecarga)
+     * 1. Comprobar que los datos que obtenemos de la reserva son correctos
+     * 2. Comprobar que ESA PISTA no está reservada en esa franja horaria
+     * 3. Mostrar resumen de la reserva
+     * @param reserva
+     * @param token
+     * @return
+     * @throws JSONException
+     */
+    public JSONObject reservar(Reserva reserva, String token) throws JSONException {
+        //Aprovechamos la función que hicimos para validar los datos en la búsqueda de pistas
+        JSONObject jsonObject = validarPeticionBusquedaReserva(reserva, true);
+
+        if(!jsonObject.getBoolean("success")){
+            return jsonObject;
+        }
+
+        //Comprobamos que el usuario es quien dice ser
+        token = token.split(" ")[1];
+        JwtUser jwtUser = new JwtUser();
+        if(StringUtils.isNotBlank(token)) {
+            jwtUser = new JwtValidator().validate(token);
+            if(jwtUser != null){
+                //Si no llega la id de usuario por la petición la añadimos cogiéndola del token
+                if(reserva.getIdUsuario() == 0){
+                    reserva.setIdUsuario((int) (long)jwtUser.getId());
+                }
+
+                jsonObject = controlUsuario(reserva, jwtUser);
+            } else {
+                jsonObject = Utils.jsonResponseSetter(false, "No se ha podido realizar la reserva, contacta con el administrador");
+            }
+        }
+
+        //Hemos comprobado si la hora de reserva y la duración son correctas
+        if(jsonObject.getBoolean("success")){
+
+            //Le asignamos la hora de finalización basándonos en la hora de inicio y la duración de la partida
+            reserva = prepararPeticionBusquedaReserva(reserva);
+
+            //comprobar idPista e idUsuario viene informado
+            jsonObject = prepararPeticionReserva(reserva);
+
+            //No llega el tipo de reserva informado, así que le asignamos el valor por defecto
+            if(StringUtils.equalsAnyIgnoreCase("DEFAULT_TIPORESERVA", jsonObject.getString("message"))){
+                reserva.setIdTipoReserva(Utils.DEFAULT_TIPO_RESERVA);
+            }
+
+            //Volvemos a comprobar el precio por si ha habido algún cambio inesperado
+            reserva = controlPrecio(reserva);
+
+            if(jsonObject.getBoolean("success")&& repository.recuperarReserva(reserva.getIdPista(), reserva.getHoraInicio(), reserva.getHoraFin()).size() == 0){
+                try{
+                    //Añadimos la fecha de la reserva
+                    DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+                    dateFormat.setTimeZone(TimeZone.getTimeZone(Utils.DEFAULT_TIMEZONE));
+                    Date hoy = Calendar.getInstance(TimeZone.getTimeZone(Utils.DEFAULT_TIMEZONE)).getTime();
+                    reserva.setFecha(dateFormat.format(hoy));
+
+                    if(reserva.getHoraInicio().before(hoy)){
+                        return Utils.jsonResponseSetter(false, "No se puede reservar una pista del pasado, a menos que llames al Dr. Emmett Brown ");
+                    }
+
+                    ReservaEntity reservaEntity = converter.convertirReservaEntity(reserva);
+
+                    reservaEntity = repository.saveAndFlush(reservaEntity);
+                    jsonObject.put("message", converter.convertirReservaModelo(reservaEntity));
+
+                    return  jsonObject;
+                }catch (Exception e){
+                    LOGGER.error("Ha ocurrido un error al intentar guardar la reserva", e);
+                    return Utils.jsonResponseSetter(false,"No se ha podido realizar la reserva");
+                }
+            } else {
+                return Utils.jsonResponseSetter(false, "Ups! parece que alguien se te ha adelantado!");
+            }
+        }
+
+        return  jsonObject;
+    }
 
     /**
      * Método para cancelar pista

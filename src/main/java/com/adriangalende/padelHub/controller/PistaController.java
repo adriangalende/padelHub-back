@@ -16,7 +16,7 @@ public class PistaController {
     @Autowired
     PistaService service;
 
-    @CrossOrigin(origins = "http://localhost:4200")
+    @CrossOrigin
     @RequestMapping(value="/pistas")
     public List<Pista> obtenerPistas(){
         return service.obtenerPistas();
