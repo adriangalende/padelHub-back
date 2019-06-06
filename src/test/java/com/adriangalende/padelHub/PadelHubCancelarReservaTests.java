@@ -22,6 +22,7 @@ import java.io.IOException;
 public class PadelHubCancelarReservaTests {
     private ObjectMapper objectMapper = new ObjectMapper();
     private String jsonPeticion = "";
+    private String token = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJTYW50aSBNYXJ0b3JlbGwiLCJ1c2VySWQiOiIyOCIsImNsdWJJZCI6IjIiLCJyb2xlIjoiY2x1YiIsImVtYWlsIjoic2FudGltQHBhZGVsZ29pbi5jb20ifQ.0No6ExkGw0ZbNE0P2yLvl8rNtmWmoIuGaB2JIwzqG7Y";
 
     @Autowired
     ReservaService service;
@@ -59,7 +60,7 @@ public class PadelHubCancelarReservaTests {
 
         PeticionCancelarPista peticionCancelarPista = crearPeticion(jsonPeticion);
         Assert.assertEquals(0, peticionCancelarPista.getIdUsuario());
-        JSONObject cancelacion = service.cancelar(peticionCancelarPista);
+        JSONObject cancelacion = service.cancelar(peticionCancelarPista, token);
         Assert.assertEquals(false, cancelacion.getBoolean("success"));
     }
 
@@ -76,7 +77,7 @@ public class PadelHubCancelarReservaTests {
 
         PeticionCancelarPista peticionCancelarPista = crearPeticion(jsonPeticion);
         Assert.assertEquals(6, peticionCancelarPista.getIdReserva());
-        JSONObject cancelacion = service.cancelar(peticionCancelarPista);
+        JSONObject cancelacion = service.cancelar(peticionCancelarPista, token);
         Assert.assertEquals(false, cancelacion.getBoolean("success"));
     }
 
@@ -93,7 +94,7 @@ public class PadelHubCancelarReservaTests {
                 "}";
 
         PeticionCancelarPista peticion = crearPeticion(jsonPeticion);
-        JSONObject cancelacion = service.cancelar(peticion);
+        JSONObject cancelacion = service.cancelar(peticion, token);
         Assert.assertEquals(false, cancelacion.getBoolean("success"));
     }
 
@@ -106,7 +107,7 @@ public class PadelHubCancelarReservaTests {
                 "}";
 
         PeticionCancelarPista peticion = crearPeticion(jsonPeticion);
-        JSONObject cancelacion = service.cancelar(peticion);
+        JSONObject cancelacion = service.cancelar(peticion, token);
         Assert.assertEquals(true, cancelacion.getBoolean("success"));
     }
 
@@ -119,7 +120,7 @@ public class PadelHubCancelarReservaTests {
                 "}";
 
         PeticionCancelarPista peticion = crearPeticion(jsonPeticion);
-        JSONObject cancelacion = service.cancelar(peticion);
+        JSONObject cancelacion = service.cancelar(peticion, token);
         Assert.assertEquals(true, cancelacion.getBoolean("success"));
     }
 

@@ -7,6 +7,7 @@ public class RespuestaDisponibilidadPista {
     private String idPista;
     private String nombre;
     private String club;
+    private String idClub;
     private String tipoPista;
     private String rutaImagenes;
     private String precio;
@@ -86,5 +87,13 @@ public class RespuestaDisponibilidadPista {
 
     public void setDuracion(String duracion) {
         this.duracion = duracion;
+    }
+
+    public String getIdClub() {
+        return idClub;
+    }
+
+    public void setIdClub(String idClub) {
+        this.idClub = idClub;
     }
 }

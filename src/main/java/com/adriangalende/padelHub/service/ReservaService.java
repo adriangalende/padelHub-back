@@ -3,10 +3,14 @@ package com.adriangalende.padelHub.service;
 
 import com.adriangalende.padelHub.converter.ReservaConverter;
 import com.adriangalende.padelHub.entity.ReservaEntity;
+import com.adriangalende.padelHub.entity.UsuariosEntity;
 import com.adriangalende.padelHub.model.*;
+import com.adriangalende.padelHub.repository.ClubRepository;
 import com.adriangalende.padelHub.repository.ReservaRepository;
 import com.adriangalende.padelHub.security.JwtValidator;
 import com.adriangalende.padelHub.utils.Utils;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -19,6 +23,7 @@ import org.springframework.http.HttpRequest;
 import org.springframework.stereotype.Service;
 
 
+import javax.rmi.CORBA.Util;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -43,6 +48,10 @@ public class ReservaService {
     @Autowired
     @Qualifier("servicio_usuarios")
     private UsuariosService usuariosService;
+
+    @Autowired
+    @Qualifier("servicio_club")
+    private ClubService clubService;
 
     @Autowired
     @Qualifier("convertidor_reserva")
@@ -74,6 +83,11 @@ public class ReservaService {
 
         if( (hora < 9 && minutos >= 0)  || ( hora >= 22 && minutos > 0 ||  (hora > 22 && minutos >= 0))){
             return Utils.jsonResponseSetter(false, "Las horas de reserva son de 9:00 a 22:00");
+        }
+
+        //Si la fecha de reserva es inferior a ahora
+        if( reserva.getHoraInicio().before(new Date())){
+            return Utils.jsonResponseSetter(false, "No puedes reservar pistas en fechas pasadas");
         }
 
         if(reserva.getDuracion() == 0){
@@ -241,7 +255,7 @@ public class ReservaService {
             }
 
             reservaAuxiliar.setPrecio(precio.getPrecio() + precio.getSuplementoLuz());
-
+            reservaAuxiliar.setIdClub(pista.getIdClub());
             pistasDisponiblesReserva.add(reservaAuxiliar);
 
 
@@ -297,6 +311,7 @@ public class ReservaService {
      * para realizar la reserva correctamente.
      */
     private JSONObject prepararPeticionReserva(Reserva reserva) {
+
         if(reserva.getIdClub() == 0){
             return Utils.jsonResponseSetter(false,"La id del club debe venir informada");
         }
@@ -444,6 +459,11 @@ public class ReservaService {
             //Volvemos a comprobar el precio por si ha habido algún cambio inesperado
             reserva = controlPrecio(reserva);
 
+
+            //TODO SI LA RESERVA ES UN BLOQUEO Y EL USUARIO ES DE TIPO CLUB PARA EL CLUB DONDE SE REALIA LA RESERVA
+            //TODO ACTIVAR MODO DESTROYER!!!!!
+
+
             if(jsonObject.getBoolean("success")&& repository.recuperarReserva(reserva.getIdPista(), reserva.getHoraInicio(), reserva.getHoraFin()).size() == 0){
                 try{
                     //Añadimos la fecha de la reserva
@@ -485,12 +505,22 @@ public class ReservaService {
      * @param peticion
      * @return
      */
-    public JSONObject cancelar(PeticionCancelarPista peticion) {
+    public JSONObject cancelar(PeticionCancelarPista peticion, String token) throws JsonProcessingException {
         JSONObject jsonObject = null;
         Optional<ReservaEntity> reserva  = repository.findById(peticion.getIdReserva());
         ReservaEntity reservaEntity = new ReservaEntity();
 
-        Usuarios usuario = usuariosService.obtenerUsuario(peticion.getIdUsuario());
+        //Obtenemos el usuario a partir del jwt token
+        JwtUser jwtUser = new JwtValidator().validate(token.split(" ")[1]);
+
+        if(jwtUser == null){
+            LOGGER.error("La información del token no es correcta, posible manipulación de los datos.");
+            LOGGER.error("Token: " + token);
+            LOGGER.error("peticion: " + new ObjectMapper().writeValueAsString(peticion));
+            return Utils.jsonResponseSetter(false, "No se han podido comprobar las crecenciales del usuario");
+        }
+
+        Usuarios usuario = usuariosService.obtenerUsuario((int)(long)jwtUser.getId());
         if(usuario == null || usuario.getId() == 0){
             return Utils.jsonResponseSetter(false, "El usuario no existe o no tiene permisos");
         }
@@ -522,5 +552,107 @@ public class ReservaService {
     }
 
 
+    public JSONObject obtenerReservas(String token) {
+        JSONObject jsonObject = new JSONObject();
+        //Token = Bearer tokenString.
+        JwtUser jwtUser = new JwtValidator().validate(token.split(" ")[1]);
+
+        if(jwtUser == null){
+            return Utils.jsonResponseSetter(false, "No hemos podido recuperar tus reservas");
+        }
+
+        Optional<List<ReservaEntity>>listaReservas = repository.obtenerReservasUsuario((int)(long)jwtUser.getId());
+
+        if(listaReservas.isPresent()){
+            try {
+                jsonObject.put("success",true);
+                jsonObject.put("message", converter.convertirLista(listaReservas.get()));
+            } catch (JSONException e) {
+                LOGGER.error("Error al agregar la lista de reservas en el objeto jsonObject", e);
+                jsonObject = Utils.jsonResponseSetter(false, "No hemos podido recuperar tus reservas");
+            }
+        } else {
+            return Utils.jsonResponseSetter(true, "Todavía no tienes reservas hechas");
+        }
+
+        return jsonObject;
+    }
+
+
+    public JSONObject obtenerReservasClub (String token) {
+        JSONObject jsonObject = new JSONObject();
+        //Token = Bearer tokenString.
+        JwtUser jwtUser = new JwtValidator().validate(token.split(" ")[1]);
+
+        if(jwtUser == null || StringUtils.equalsIgnoreCase(jwtUser.getRole(),"usuario")){
+            return Utils.jsonResponseSetter(false, "No hemos podido recuperar tus reservas");
+        }
+
+        Optional<List<ReservaEntity>>listaReservas = repository.obtenerReservasClub((int)jwtUser.getIdClub());
+
+        if(listaReservas.isPresent()){
+            try {
+
+                jsonObject.put("success",true);
+                jsonObject.put("message", completarListaReserva(listaReservas.get()));
+            } catch (JSONException e) {
+                LOGGER.error("Error al agregar la lista de reservas en el objeto jsonObject", e);
+                jsonObject = Utils.jsonResponseSetter(false, "No hemos podido recuperar tus reservas");
+            }
+        } else {
+            return Utils.jsonResponseSetter(false, "Todavía no tienes reservas hechas");
+        }
+
+        return jsonObject;
+    }
+
+
+
+    public JSONObject obtenerTodasReservasClub (String token) {
+        JSONObject jsonObject = new JSONObject();
+        //Token = Bearer tokenString.
+        JwtUser jwtUser = new JwtValidator().validate(token.split(" ")[1]);
+
+        if(jwtUser == null || StringUtils.equalsIgnoreCase(jwtUser.getRole(),"usuario")){
+            return Utils.jsonResponseSetter(false, "No hemos podido recuperar tus reservas");
+        }
+
+        Optional<List<ReservaEntity>>listaReservas = repository.obtenerTodasReservasClub((int)jwtUser.getIdClub());
+
+        if(listaReservas.isPresent()){
+            try {
+
+                jsonObject.put("success",true);
+                jsonObject.put("message", completarListaReserva(listaReservas.get()));
+            } catch (JSONException e) {
+                LOGGER.error("Error al agregar la lista de reservas en el objeto jsonObject", e);
+                jsonObject = Utils.jsonResponseSetter(false, "No hemos podido recuperar tus reservas");
+            }
+        } else {
+            return Utils.jsonResponseSetter(false, "Todavía no tienes reservas hechas");
+        }
+
+        return jsonObject;
+    }
+
+    private List<ReservaCompleta> completarListaReserva(List<ReservaEntity> listaReservasEntity){
+        List<ReservaCompleta> listaReservasCompleta = new ArrayList<>();
+
+        for(ReservaEntity reservaEntity:listaReservasEntity){
+
+            ReservaCompleta reservaCompleta = converter.convertirReservaCompletaModelo(reservaEntity);
+
+            //Obtenemos datos extra para completar
+            Usuarios usuarioReserva = usuariosService.obtenerUsuario(reservaCompleta.getIdUsuario());
+            reservaCompleta.setNombreUsuario(usuarioReserva.getNombre());
+            reservaCompleta.setTelefonoUsuario(usuarioReserva.getTelefono());
+            reservaCompleta.setTipoUsuario(usuariosService.obtenerTipoUsuario(usuarioReserva.getId()));
+            reservaCompleta.setNombrePista(pistaService.datosPista(reservaCompleta.getIdPista()).get().getNombre());
+            listaReservasCompleta.add(reservaCompleta);
+
+        }
+
+        return listaReservasCompleta;
+    }
 
 }

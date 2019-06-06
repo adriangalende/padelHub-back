@@ -10,11 +10,15 @@ import lombok.Setter;
 import java.util.Date;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Reserva {
+public class ReservaCompleta {
     private int id;
     private int idUsuario;
+    private String nombreUsuario;
+    private String telefonoUsuario;
+    private String tipoUsuario;
     private int idClub;
     private int idPista;
+    private String nombrePista;
     @JsonFormat(pattern="dd/MM/yyyy HH:mm:ss", timezone = "+02:00")
     private Date horaInicio;
     @JsonFormat(pattern="dd/MM/yyyy HH:mm")
@@ -27,15 +31,16 @@ public class Reserva {
     private int checkin;
     private int noShow;
 
-    public Reserva() {
+    public ReservaCompleta() {
     }
 
-    public Reserva(ReservaEntity reservaEntity) {
+    public ReservaCompleta(ReservaEntity reservaEntity) {
         this.id = reservaEntity.getId();
         this.idUsuario = reservaEntity.getIdUsuario();
         this.idClub = reservaEntity.getIdClub();
         this.idPista = reservaEntity.getIdPista();
         this.horaInicio = reservaEntity.getHoraInicio();
+        this.duracion = reservaEntity.getDuracion();
         this.horaFin = reservaEntity.getHoraFin();
         this.fecha = reservaEntity.getFecha();
         this.idTipoReserva = reservaEntity.getIdTipoReserva();
@@ -146,5 +151,37 @@ public class Reserva {
 
     public void setNoShow(int noShow) {
         this.noShow = noShow;
+    }
+
+    public String getNombreUsuario() {
+        return nombreUsuario;
+    }
+
+    public void setNombreUsuario(String nombreUsuario) {
+        this.nombreUsuario = nombreUsuario;
+    }
+
+    public String getTelefonoUsuario() {
+        return telefonoUsuario;
+    }
+
+    public void setTelefonoUsuario(String telefonoUsuario) {
+        this.telefonoUsuario = telefonoUsuario;
+    }
+
+    public String getTipoUsuario() {
+        return tipoUsuario;
+    }
+
+    public void setTipoUsuario(String tipoUsuario) {
+        this.tipoUsuario = tipoUsuario;
+    }
+
+    public String getNombrePista() {
+        return nombrePista;
+    }
+
+    public void setNombrePista(String nombrePista) {
+        this.nombrePista = nombrePista;
     }
 }

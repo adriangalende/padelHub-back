@@ -31,4 +31,7 @@ public class PistaService {
     }
 
 
+    public List<Pista> obtenerPistasClub(Integer idClub) {
+        return converter.convertirListaEntities(repository.buscarPistas(idClub));
+    }
 }

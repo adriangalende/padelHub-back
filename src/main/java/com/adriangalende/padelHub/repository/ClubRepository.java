@@ -8,4 +8,5 @@ import java.io.Serializable;
 
 @Repository("repositorio_club")
 public interface ClubRepository extends JpaRepository<ClubEntity, Serializable> {
+    int findAllByNombre(String nombreClub);
 }

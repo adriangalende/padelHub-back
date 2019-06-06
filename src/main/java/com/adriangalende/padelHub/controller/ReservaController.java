@@ -45,11 +45,7 @@ public class ReservaController {
             e.printStackTrace();
         }
 
-        try {
-            return (String)jsonObject.get("message");
-        }catch (JSONException e) {
-            return "El formato json no es correcto";
-        }
+        return jsonObject.toString();
     }
 
 
@@ -77,12 +73,32 @@ public class ReservaController {
     }
 
     @RequestMapping(value="/wss/cancelar")
-    public String cancelarPista(@RequestBody @Valid PeticionCancelarPista peticion){
+    public String cancelarPista(@RequestBody @Valid PeticionCancelarPista peticion,  @RequestHeader("Authorization") String token){
         jsonObject = null;
         mapper = new ObjectMapper();
 
         try{
-            jsonObject = service.cancelar(peticion);
+            jsonObject = service.cancelar(peticion, token);
+            if(jsonObject.getBoolean("success")){
+                return jsonObject.toString();
+            }
+        }catch (JSONException e){
+            return "El formato json no es correcto";
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+
+        return jsonObject.toString();
+    }
+
+    @RequestMapping(value="/wss/misReservas")
+    public String obtener(@RequestHeader("Authorization") String token){
+        jsonObject = null;
+        mapper = new ObjectMapper();
+
+        try{
+            jsonObject = service.obtenerReservas(token);
             if(jsonObject.getBoolean("success")){
                 return mapper.writeValueAsString(jsonObject.get("message"));
             }
@@ -92,12 +108,45 @@ public class ReservaController {
             e.printStackTrace();
         }
 
-        try {
-            return (String)jsonObject.get("message");
-        } catch (JSONException e) {
+            return jsonObject.toString();
+    }
+
+    @RequestMapping(value="/wss/reservas")
+    public String obtenerReservasClub(@RequestHeader("Authorization") String token){
+        jsonObject = null;
+        mapper = new ObjectMapper();
+
+        try{
+            jsonObject = service.obtenerReservasClub(token);
+            if(jsonObject.getBoolean("success")){
+                return mapper.writeValueAsString(jsonObject.get("message"));
+            }
+        }catch (JSONException e){
             return "El formato json no es correcto";
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
         }
 
+        return jsonObject.toString();
+    }
+
+    @RequestMapping(value="/wss/treservas")
+    public String obtenerTodasReservasClub(@RequestHeader("Authorization") String token){
+        jsonObject = null;
+        mapper = new ObjectMapper();
+
+        try{
+            jsonObject = service.obtenerTodasReservasClub(token);
+            if(jsonObject.getBoolean("success")){
+                return mapper.writeValueAsString(jsonObject.get("message"));
+            }
+        }catch (JSONException e){
+            return "El formato json no es correcto";
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        return jsonObject.toString();
     }
 
 }

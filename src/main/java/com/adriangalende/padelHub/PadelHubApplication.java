@@ -11,7 +11,7 @@ public class PadelHubApplication {
 
 	@PostConstruct
 	void started() {
-		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+		TimeZone.setDefault(TimeZone.getTimeZone("+02:00"));
 	}
 
 	public static void main(String[] args) {
