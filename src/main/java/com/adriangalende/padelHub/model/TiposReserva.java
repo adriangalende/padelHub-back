@@ -18,4 +18,28 @@ public class TiposReserva {
         this.descripcion = tiposReservaEntity.getDescripcion();
         this.idClub = tiposReservaEntity.getIdClub();
     }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
+    public int getIdClub() {
+        return idClub;
+    }
+
+    public void setIdClub(int idClub) {
+        this.idClub = idClub;
+    }
 }

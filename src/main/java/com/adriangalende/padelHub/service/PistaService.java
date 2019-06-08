@@ -1,8 +1,11 @@
 package com.adriangalende.padelHub.service;
 
 import com.adriangalende.padelHub.converter.PistaConverter;
+import com.adriangalende.padelHub.converter.TiposReservaConverter;
 import com.adriangalende.padelHub.entity.PistaEntity;
 import com.adriangalende.padelHub.model.Pista;
+import com.adriangalende.padelHub.model.TiposPista;
+import com.adriangalende.padelHub.model.TiposReserva;
 import com.adriangalende.padelHub.repository.PistaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -22,6 +25,7 @@ public class PistaService {
     @Qualifier("convertidor_pista")
     private PistaConverter converter;
 
+
     public List<Pista> obtenerPistas(){
         return converter.convertirListaEntities(repository.findAll());
     }
@@ -34,4 +38,5 @@ public class PistaService {
     public List<Pista> obtenerPistasClub(Integer idClub) {
         return converter.convertirListaEntities(repository.buscarPistas(idClub));
     }
+
 }

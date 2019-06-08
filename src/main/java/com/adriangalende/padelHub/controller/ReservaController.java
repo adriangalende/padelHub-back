@@ -149,4 +149,43 @@ public class ReservaController {
         return jsonObject.toString();
     }
 
+    @RequestMapping(value="/wss/checkIn")
+    public String checkIn(@RequestBody @Valid PeticionCancelarPista peticion,  @RequestHeader("Authorization") String token){
+        jsonObject = null;
+        mapper = new ObjectMapper();
+
+        try{
+            jsonObject = service.checkIn(peticion, token.split(" ")[1]);
+            if(jsonObject.getBoolean("success")){
+                return mapper.writeValueAsString(jsonObject.get("message"));
+            }
+        }catch (JSONException e){
+            return "El formato json no es correcto";
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        return jsonObject.toString();
+    }
+
+    @RequestMapping(value="/wss/noShow")
+    public String noShow(@RequestBody @Valid PeticionCancelarPista peticion,  @RequestHeader("Authorization") String token){
+        jsonObject = null;
+        mapper = new ObjectMapper();
+
+        try{
+            jsonObject = service.noShow(peticion, token.split(" ")[1]);
+            if(jsonObject.getBoolean("success")){
+                return mapper.writeValueAsString(jsonObject.get("message"));
+            }
+        }catch (JSONException e){
+            return "El formato json no es correcto";
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        return jsonObject.toString();
+    }
+
+    
 }

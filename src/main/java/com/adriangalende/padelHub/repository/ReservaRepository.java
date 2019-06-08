@@ -19,6 +19,8 @@ public interface ReservaRepository extends JpaRepository<ReservaEntity, Serializ
 
     public abstract List<ReservaEntity> findAllByHoraInicioLessThanEqualAndHoraFinGreaterThanEqual(Date horaInicio, Date horaFin);
 
+    Optional<ReservaEntity> findById(int id);
+
     @Query(value="from ReservaEntity reserva WHERE (reserva.horaInicio >= :horaInicio or reserva.horaFin > :horaInicio) and reserva.horaInicio < :horaFin ")
     public abstract List<ReservaEntity> getAllBetweenDates(@Param("horaInicio") Date horaInicio, @Param("horaFin") Date horaFin);
 
@@ -35,4 +37,7 @@ public interface ReservaRepository extends JpaRepository<ReservaEntity, Serializ
 
     @Query(value="from ReservaEntity reserva where reserva.idClub = :idClub order by reserva.horaInicio asc")
     Optional<List<ReservaEntity>> obtenerTodasReservasClub(@Param("idClub")int id);
+
+    @Query("from ReservaEntity res where res.idClub = :idClub and res.idPista = :idPista and DATE_FORMAT(hora_inicio,'%d/%m/%Y') = DATE_FORMAT(:fechaInicio,'%d/%m/%Y')")
+    Optional<List<ReservaEntity>> reservasClubFecha(@Param("idClub") int idClub, @Param("fechaInicio") Date horaInicio,  @Param("idPista") int idPista);
 }
