@@ -14,6 +14,7 @@ public class RespuestaDisponibilidadPista {
     private String precioLuz;
     private String horaInicio;
     private String duracion;
+    private String descripcion;
 
     public RespuestaDisponibilidadPista(){}
 
@@ -95,5 +96,13 @@ public class RespuestaDisponibilidadPista {
 
     public void setIdClub(String idClub) {
         this.idClub = idClub;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
     }
 }

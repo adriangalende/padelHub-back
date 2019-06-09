@@ -45,6 +45,7 @@ public class ReservaConverter {
                 respuestaDisponibilidadPista.setPrecioLuz("");
                 respuestaDisponibilidadPista.setHoraInicio(reserva.getHoraInicio().toString());
                 respuestaDisponibilidadPista.setDuracion(String.valueOf(reserva.getDuracion()));
+                respuestaDisponibilidadPista.setDescripcion(reserva.getDescripcion());
                 listaReservas.add(respuestaDisponibilidadPista);
             }
 

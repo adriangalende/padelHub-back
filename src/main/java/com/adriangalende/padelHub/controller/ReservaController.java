@@ -65,11 +65,7 @@ public class ReservaController {
             e.printStackTrace();
         }
 
-        try {
-            return (String)jsonObject.get("message");
-        } catch (JSONException e) {
-            return "El formato json no es correcto";
-        }
+        return jsonObject.toString();
     }
 
     @RequestMapping(value="/wss/cancelar")

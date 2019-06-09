@@ -26,6 +26,7 @@ public class ReservaEntity {
     private int duracion;
     private int checkIn;
     private int noShow;
+    private String descripcion;
 
     public ReservaEntity(){}
 
@@ -42,6 +43,7 @@ public class ReservaEntity {
         this.duracion = reserva.getDuracion();
         this.checkIn = reserva.getCheckin();
         this.noShow = reserva.getNoShow();
+        this.descripcion = reserva.getDescripcion();
     }
 
     @Id
@@ -156,6 +158,16 @@ public class ReservaEntity {
     public int getNoShow(){ return  noShow; }
     public void setNoShow(int noShow){ this.noShow = noShow; }
 
+    @Basic
+    @Column(name = "descripcion")
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -171,12 +183,13 @@ public class ReservaEntity {
                 Objects.equals(fecha, that.fecha) &&
                 Objects.equals(precio, that.precio) &&
                 Objects.equals(checkIn, that.checkIn) &&
-                Objects.equals(noShow,that.noShow);
+                Objects.equals(noShow,that.noShow) &&
+                Objects.equals(descripcion,that.descripcion);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, idUsuario, idClub, idPista, horaInicio, horaFin, fecha, idTipoReserva, precio, checkIn, noShow);
+        return Objects.hash(id, idUsuario, idClub, idPista, horaInicio, horaFin, fecha, idTipoReserva, precio, checkIn, noShow, descripcion);
     }
 
     @ManyToOne

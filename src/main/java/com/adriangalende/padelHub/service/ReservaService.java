@@ -186,6 +186,8 @@ public class ReservaService {
             if (listaDisponibilidadPistasReserva != null) {
                 jsonResponse.put("message", converter.convertirListaRespuestaDispo(listaDisponibilidadPistasReserva));
                 return jsonResponse;
+            } else {
+                return Utils.jsonResponseSetter(false, "No hay pistas disponibles para tu búsqueda");
             }
         }
 

@@ -26,12 +26,15 @@ public class Reserva {
     private int flexibilidad;
     private int checkin;
     private int noShow;
+    private String nombreClub;
+    private String descripcion;
 
     public Reserva() {
     }
 
     public Reserva(ReservaEntity reservaEntity) {
         this.id = reservaEntity.getId();
+        this.descripcion = reservaEntity.getDescripcion();
         this.idUsuario = reservaEntity.getIdUsuario();
         this.idClub = reservaEntity.getIdClub();
         this.idPista = reservaEntity.getIdPista();
@@ -40,8 +43,10 @@ public class Reserva {
         this.fecha = reservaEntity.getFecha();
         this.idTipoReserva = reservaEntity.getIdTipoReserva();
         this.precio = reservaEntity.getPrecio();
+        this.duracion = reservaEntity.getDuracion();
         this.checkin = reservaEntity.getCheckIn();
         this.noShow = reservaEntity.getNoShow();
+        this.nombreClub = reservaEntity.getClubByIdClub() != null ? reservaEntity.getClubByIdClub().getNombre() : null;
     }
 
     public int getId() {
@@ -146,5 +151,21 @@ public class Reserva {
 
     public void setNoShow(int noShow) {
         this.noShow = noShow;
+    }
+
+    public String getNombreClub() {
+        return nombreClub;
+    }
+
+    public void setNombreClub(String nombreClub) {
+        this.nombreClub = nombreClub;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
     }
 }

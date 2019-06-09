@@ -18,6 +18,6 @@ public class JwtSuccessHandler implements AuthenticationSuccessHandler {
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Authentication authentication) throws IOException, ServletException {
-        LOGGER.info("Autenticatión ok");
+
     }
 }

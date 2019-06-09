@@ -30,6 +30,7 @@ public class ReservaCompleta {
     private int flexibilidad;
     private int checkin;
     private int noShow;
+    private String descripcion;
 
     public ReservaCompleta() {
     }
@@ -47,6 +48,7 @@ public class ReservaCompleta {
         this.precio = reservaEntity.getPrecio();
         this.checkin = reservaEntity.getCheckIn();
         this.noShow = reservaEntity.getNoShow();
+        this.descripcion = reservaEntity.getDescripcion();
     }
 
     public int getId() {
@@ -183,5 +185,13 @@ public class ReservaCompleta {
 
     public void setNombrePista(String nombrePista) {
         this.nombrePista = nombrePista;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
     }
 }
