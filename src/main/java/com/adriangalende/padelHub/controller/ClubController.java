@@ -1,6 +1,7 @@
 package com.adriangalende.padelHub.controller;
 
 import com.adriangalende.padelHub.service.ClubService;
+import com.adriangalende.padelHub.utils.Utils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.JSONException;
@@ -20,11 +21,12 @@ public class ClubController {
 
     @Autowired
     ClubService service;
-    ObjectMapper mapper;
-    JSONObject jsonObject;
+
 
     @RequestMapping(value="/ws/club/{idClub}")
     public String infoClub(@PathVariable("idClub") String idClub){
+        JSONObject jsonObject = new JSONObject();
+        ObjectMapper mapper = new ObjectMapper();
         try {
             jsonObject = service.obtenerInfoClub(Integer.parseInt(idClub));
             if(jsonObject.getBoolean("success")){
@@ -36,5 +38,18 @@ public class ClubController {
             LOGGER.error("Error al mapear objeto a  json ");
         }
         return jsonObject.toString();
+    }
+
+
+    @RequestMapping(value="/ws/nclub/{idClub}")
+    public String nombreClub(@PathVariable("idClub") String idClub){
+        JSONObject jsonObject = new JSONObject();
+        try {
+            jsonObject.put("nombre",service.obtenerNombreClub(Integer.parseInt(idClub)));
+            return jsonObject.toString();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return Utils.jsonResponseSetter(false, "No se ha podido recuperar el nombre del club").toString();
     }
 }

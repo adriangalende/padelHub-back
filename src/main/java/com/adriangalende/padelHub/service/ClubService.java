@@ -46,4 +46,12 @@ public class ClubService {
         }
         return respuesta;
     }
+
+    public String obtenerNombreClub(int idClub) {
+        Optional<ClubEntity> club = repository.findById(idClub);
+        if(club.isPresent()){
+            return club.get().getNombre();
+        }
+        return null;
+    }
 }

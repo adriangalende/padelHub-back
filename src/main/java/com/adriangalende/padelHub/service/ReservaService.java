@@ -640,7 +640,7 @@ public class ReservaService {
                 jsonObject = Utils.jsonResponseSetter(false, "No hemos podido recuperar tus reservas");
             }
         } else {
-            return Utils.jsonResponseSetter(true, "Todavía no tienes reservas hechas");
+            return Utils.jsonResponseSetter(false, "Todavía no tienes reservas hechas");
         }
 
         return jsonObject;
